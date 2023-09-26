@@ -1,0 +1,539 @@
+<!-Licensed under the Apache License, Version 2.0->
+
+<!doctype html>
+<meta charset=utf-8>
+<title>NoteFormer: Tokenization-free Transformer for symbolic music generation</title>
+<style>
+body {
+  margin: 0 auto;
+  padding: 30px 20px 50px;
+  font-family: sans-serif;
+  background: #f4f4f4;
+  color: #222;
+  max-width: 820px;
+}
+p {
+  line-height: 150%;
+  margin: auto;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+h1, h2 {
+  font-weight: 150;
+}
+h2 {
+  font-size: 18px;
+}
+h2 a {
+  color: #000;
+}
+
+h3 {
+  margin-top: 40px;
+}
+a {
+  text-decoration: none;
+  color: #22b;
+}
+a:hover {
+  text-decoration: underline;
+  color: #22b;
+}
+a:hover img {
+  opacity: .5;
+}
+.paper img { background: #888; }
+.video img {
+  border-radius: 6px;
+  background: #000;
+}
+h1 span {
+  font-size: 90%;
+  line-height: 1.5em;
+}
+h1 span::before { content: "("; }
+h1 span::after { content: ")"; }
+h1 span::before, h1 span::after {
+  vertical-align: .06em;
+}
+h2 span {
+  line-height: 2em;
+}
+em {
+  color: #333;
+  font-weight: bold;
+  font-style: normal;
+}
+.teaser {
+  max-width: 90%;
+  margin:0 auto;
+  margin-top: 20px;
+  white-space: nowrap;
+  position: relative;
+}
+.teaser .imgs .full {
+  width: 100%;
+}
+.twocolumns {
+	height: 300px;
+}
+.twocolumns-first {
+	position: absolute;
+  	width: 50%;
+}
+.twocolumns-second {
+	position: absolute;
+  	width: 50%;
+	left: 50%;
+}
+.teaser .labels{
+  display: inline-block;
+  margin: 0 auto;
+  text-align: center;
+  padding-top: 10px;
+  font-size: 16px;
+}
+.bibtex {
+  white-space: pre;
+  font-family: monospace;
+  line-height: 150%;
+  background: #fff;
+  padding: 10px;
+  display: inline-block;
+  border-radius: 4px;
+}
+.crow > * {
+  vertical-align: middle;
+  margin-right: 20px;
+}
+a.img {
+  display: inline-block;
+}
+.links {
+  display: inline-block;
+  line-height: 150%;
+  padding: 8px 0;
+}
+.links a {
+  padding: 0 3px;
+}
+.examples {
+  padding: 10px 0;
+  max-width: 50em;
+}
+.examples img {
+  display: inline-block;
+  width: 192px;
+  height: 108px;
+}
+/* Slideshow container */
+.panorama-slideshow {
+  position: relative;
+}
+
+/* Hide the images by default */
+.panorama-slide {
+  display: none;
+}
+/* Slideshow container */
+.image-slideshow {
+  position: relative;
+}
+
+/* Hide the images by default */
+.image-slide {
+  display: none;
+}
+
+/* Next & previous buttons */
+.prev, .next {
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  width: auto;
+  margin-top: -22px;
+  padding: 16px;
+  color: white;
+  font-weight: bold;
+  font-size: 25px;
+  transition: 0.1s ease;
+  border-radius: 0 2px 2px 0;
+  user-select: none;
+}
+
+/* Position the "next button" to the right */
+.next {
+  right: 0;
+  border-radius: 3px 0 0 3px;
+}
+
+/* On hover, add a black background color with a little bit see-through */
+.prev:hover, .next:hover {
+  background-color: rgba(0,0,0,0.8);
+}
+
+/* Hide the images by default */
+div[class^='image-gallery-slide-'] {
+  display: none;
+}
+/* Next & previous buttons */
+.prev-image, .next-image {
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  width: auto;
+  margin-top: -22px;
+  margin-left: -50px;
+  margin-right: -30px;
+  padding: 16px;
+  color: black;
+  font-weight: bold;
+  font-size: 40px;
+  transition: 0.6s ease;
+  border-radius: 0 3px 3px 0;
+  user-select: none;
+}
+
+/* Position the "next button" to the right */
+.next-image {
+  right: 0;
+  border-radius: 3px 0 0 3px;
+}
+
+
+.prev-image:hover, .next-image:hover {
+  background-color: rgba(0,0,0,0.8);
+  color: white;
+}
+
+
+/* Fading animation */
+.fade {
+  -webkit-animation-name: fade;
+  -webkit-animation-duration: 1.5s;
+  animation-name: fade;
+  animation-duration: 1.5s;
+}
+
+
+@-webkit-keyframes fade {
+  from {opacity: .4}
+  to {opacity: 1}
+}
+
+@keyframes fade {
+  from {opacity: .4}
+  to {opacity: 1}
+}
+/* Style tab links */
+.tablink {
+  background-color: #fff;
+  color: black;
+  float: left;
+  outline: none;
+  cursor: pointer;
+  padding: 8px 5px;
+  font-size: 17px;
+  font-weight: bold;
+  border: none;
+
+}
+
+.tablink:hover {
+  background-color: #36373A;
+  color: white;
+}
+
+/* Style the tab content (and add height:100% for full page content) */
+.tabcontent {
+  color: white;
+  display: none;
+  padding: 100px 20px;
+  height: 100%;
+}
+
+@media screen and (min-width: 601px) {
+  .tablink {
+    font-size: 17px;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .tablink {
+    font-size: 12px;
+  }
+}
+
+</style>
+<h1>NoteFormer:&nbsp;Tokenization-free Transformer for symbolic music generation</h1>
+<h2><span><b>NeurIPS 2023 Workshop Machine Learning for Creativity and Design</b></span></h2>
+<h2>
+  Hyeongrae Ihm, Sangjun Han, Woohyung Lim <br>
+  <span>LG AI Research</span>
+</h2>
+<hr>
+
+<div class=teaser>
+<div class=imgs><img class=full src="imgs/first_image.png"></div>
+</div>
+
+<h3>Abstract</h3>
+<p> In symbolic music generation, various tokenization-based methods have been explored.
+However, tokenization is bound to data distortion, making a discrepancy from original MIDI.
+To address this limitation, we present <b>NoteFormer</b>, a novel approach distinguished by its tokenization-free paradigm.
+Tokenization-free methodology eliminates the disparity associated with quantization, preserving the fidelity of the music.
+Furthermore, NoteFormer utilizes note sequence instead of token sequence, extending the context length within the Transformer.
+Notably, NoteFormer not only utilizes the delicate music intricacy but also enhances artist accessibility by obviating the complexities of tokenization.
+<br>
+
+<h3>Tokenization Error</h3>
+<div style='display: flex; align-content: center; '>
+  <div class='row' style='width: 600px; height:350px; '>
+    <div style='height: 60px;'>
+        <p style='height: 60px; width: 150px; padding: 15px 0; text-align: center;'>Ground Truth</p>
+    </div>
+    <div style='height: 60px; '>
+        <audio controls controlsList="nodownload"
+            style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+            <source src="./assets/true1.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+        </audio>
+    </div>
+    <div style='height: 60px; '>
+      <audio controls controlsList="nodownload"
+          style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+          <source src="./assets/true2.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+      </audio>
+    </div>
+    <div style='height: 60px; '>
+      <audio controls controlsList="nodownload"
+          style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+          <source src="./assets/true3.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+      </audio>
+    </div>
+    <div style='height: 60px; '>
+      <audio controls controlsList="nodownload"
+          style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+          <source src="./assets/true4.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+      </audio>
+    </div>
+  </div>
+  <div class='row' style='width: 600px; height:350px; '>
+      <div style='height: 60px;'>
+          <p style='height: 60px; width: 150px; padding: 15px 0; text-align: center;'>REMI</p>
+      </div>
+      <div style='height: 60px; '>
+          <audio controls controlsList="nodownload"
+              style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+              <source src="./assets/remi1.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+          </audio>
+      </div>
+      <div style='height: 60px; '>
+        <audio controls controlsList="nodownload"
+            style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+            <source src="./assets/remi2.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+        </audio>
+      </div>
+      <div style='height: 60px; '>
+        <audio controls controlsList="nodownload"
+            style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+            <source src="./assets/remi3.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+        </audio>
+      </div>
+      <div style='height: 60px; '>
+        <audio controls controlsList="nodownload"
+            style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+            <source src="./assets/remi4.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+        </audio>
+      </div>
+  </div>
+  <div class='row' style='width: 600px; height:350px; '>
+      <div style='height: 60px;'>
+          <p style='height: 60px; width: 150px; padding: 15px 0; text-align: center;'>Note-by-note<br>(without pedal, etc)<p>
+      </div>
+      <div style='height: 60px; '>
+          <audio controls controlsList="nodownload"
+              style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+              <source src="./assets/note1.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+          </audio>
+      </div>
+      <div style='height: 60px; '>
+        <audio controls controlsList="nodownload"
+            style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+            <source src="./assets/note2.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+        </audio>
+      </div>
+      <div style='height: 60px; '>
+        <audio controls controlsList="nodownload"
+            style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+            <source src="./assets/note3.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+        </audio>
+      </div>
+      <div style='height: 60px; '>
+        <audio controls controlsList="nodownload"
+            style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+            <source src="./assets/note4.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+        </audio>
+      </div>
+  </div>
+</div>
+
+<h3>Generated music</h3>
+<div style='display: flex; align-content: center; '>
+  <div class='row' style='width: 600px; height:50px; '>
+    <div style='height: 60px;'>
+        <p style='height: 60px; width: 150px; padding: 15px 0; text-align: center;'>Ground Truth</p>
+    </div>
+    <div style='height: 60px; '>
+        <audio controls controlsList="nodownload"
+            style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+            <source src="./assets/1_t.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+        </audio>
+    </div>
+    <div style='height: 60px; '>
+      <audio controls controlsList="nodownload"
+          style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+          <source src="./assets/2_t.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+      </audio>
+    </div>
+    <div style='height: 60px; '>
+      <audio controls controlsList="nodownload"
+          style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+          <source src="./assets/3_t.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+      </audio>
+    </div>
+    <div style='height: 60px; '>
+      <audio controls controlsList="nodownload"
+          style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+          <source src="./assets/4_t.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+      </audio>
+    </div>
+  </div>
+  <div class='row' style='width: 600px; height:50px; '>
+      <div style='height: 60px;'>
+          <p style='height: 60px; width: 150px; padding: 15px 0; text-align: center;'>Pop Music Transformer</p>
+      </div>
+      <div style='height: 60px; '>
+          <audio controls controlsList="nodownload"
+              style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+              <source src="./assets/1_f.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+          </audio>
+      </div>
+      <div style='height: 60px; '>
+        <audio controls controlsList="nodownload"
+            style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+            <source src="./assets/2_f.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+        </audio>
+      </div>
+      <div style='height: 60px; '>
+        <audio controls controlsList="nodownload"
+            style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+            <source src="./assets/3_f.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+        </audio>
+      </div>
+      <div style='height: 60px; '>
+        <audio controls controlsList="nodownload"
+            style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+            <source src="./assets/4_f.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+        </audio>
+      </div>
+  </div>
+  <div class='row' style='width: 600px; height:50px; '>
+      <div style='height: 60px;'>
+          <p style='height: 60px; width: 150px; padding: 15px 0; text-align: center;'>NoteFormer</p>
+      </div>
+      <div style='height: 60px; '>
+          <audio controls controlsList="nodownload"
+              style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+              <source src="./assets/1_p.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+          </audio>
+      </div>
+      <div style='height: 60px; '>
+        <audio controls controlsList="nodownload"
+            style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+            <source src="./assets/2_p.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+        </audio>
+      </div>
+      <div style='height: 60px; '>
+        <audio controls controlsList="nodownload"
+            style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+            <source src="./assets/3_p.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+        </audio>
+      </div>
+      <div style='height: 60px; '>
+        <audio controls controlsList="nodownload"
+            style='display: inline-block; padding:8px; width: 270px; height: 50px '>
+            <source src="./assets/4_p.wav" class="img-fluid rounded mx-auto d-block" alt="temp">
+        </audio>
+      </div>
+  </div>
+</div>
+<br>
+
+
+
+<script>
+
+var panoramaSlideIndex = 1;
+var imageSlideIndex = 1;
+
+// Show first page for panorama slide.
+showPanoramaSlides(panoramaSlideIndex);
+// Show first page for image slide.
+showImageSlides(imageSlideIndex);
+
+// Functions for controlling arrows for Panorama slides.
+function plusPanoramaSlides(n) {
+  showPanoramaSlides(panoramaSlideIndex += n);
+}
+
+function showPanoramaSlides(n) {
+  var i;
+  var slides = document.getElementsByClassName("panorama-slide");
+  if (n > slides.length) {panoramaSlideIndex = 1}    
+  if (n < 1) {panoramaSlideIndex = slides.length}
+  for (i = 0; i < slides.length; i++) {
+      slides[i].style.display = "none";  
+  }
+  slides[panoramaSlideIndex-1].style.display = "block";  
+}
+
+
+function plusImageSlides(n) {
+  showImageSlides(imageSlideIndex += n);
+}
+
+function showImageSlides(n) {
+  var i;
+  var slides = document.getElementsByClassName("image-slide");
+  if (n > slides.length) {imageSlideIndex = 1}    
+  if (n < 1) {imageSlideIndex = slides.length}
+  for (i = 0; i < slides.length; i++) {
+      slides[i].style.display = "none";  
+  }
+  slides[imageSlideIndex-1].style.display = "block";  
+}
+
+
+// Function to control the Tab.
+function openTask(taskName, elmnt) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName("tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName("tablink");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].style.color = "";
+    tablinks[i].style.backgroundColor = "";
+  }
+  document.getElementById(taskName).style.display = "block";
+  elmnt.style.color = "white";
+  elmnt.style.backgroundColor = "#36373A";
+}
+
+// Get the element with id="defaultOpen" and click on it
+document.getElementById("defaultOpen").click();
+
+  </script>
+
+
